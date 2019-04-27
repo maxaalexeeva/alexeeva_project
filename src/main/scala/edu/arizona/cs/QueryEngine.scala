@@ -81,7 +81,7 @@ class QAEngine() {
     val fw = new FileWriter("test.txt", true)
 
     val allData = data.mkString(" ").split("\\[\\[") //split on [[ to separate entries
-    for (line <- allData if line.length >0) {
+    for (line <- allData) {
       println(allData.indexOf(line))
 
       val splitLine = line.split("\\]\\]") //split on ]] to separate title from body
