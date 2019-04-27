@@ -35,12 +35,12 @@ import scala.io.Source
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.collection.{immutable, mutable}
 
-object QAEngine {
+object Preprocess {
 
   def main(args: Array[String]): Unit = {
 
     println("Hi")
-    val qa = new QAEngine
+    val qa = new Preprocess
     qa.train("wiki")
 
 //    try {
@@ -62,7 +62,7 @@ object QAEngine {
 
 }
 
-class QAEngine() {
+class Preprocess() {
   protected lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   def train(collection: String): Unit = {
@@ -73,7 +73,7 @@ class QAEngine() {
     val data = for {
       file <- files
       line <- Source.fromFile(file).getLines()
-    } yield line
+    } yield line.replaceAll("\\[\\[File.*?\\]\\]|\\[\\[Image.*?\\]\\]|^\n|\\[\\[Media.*?\\]\\]", "")
 
     val proc = new ShallowNLPProcessor()
 
@@ -81,33 +81,37 @@ class QAEngine() {
     val fw = new FileWriter("test.txt", true)
 
     val allData = data.mkString(" ").split("\\[\\[") //split on [[ to separate entries
+    //println(allData.length)
+
     for (line <- allData) {
+      //println(line)
       println(allData.indexOf(line))
 
       val splitLine = line.split("\\]\\]") //split on ]] to separate title from body
       fw.write(splitLine.head + "\t")
       val textToLemmatize = splitLine.tail.mkString(" ").split("\\. ").filter(m => m.length>5) //break body up into sentences
-      //textToLemmatize.foreach(m => println(m + "\n"))
+//
+////      //textToLemmatize.foreach(m => println(m + "\n"))
       val doc = proc.annotateFromSentences(textToLemmatize.headOption) //lemmatize
-
-      //println(doc.sentences.foreach(sent => sent.lemmas.mkString(" ") + ". " + "\n"))
-      //fw.write(splitLine.head + "\t" + doc.sentences.foreach(sent => sent.lemmas.mkString(" ") + ". " + "\n"))
-//      val bodyLemmatized = for {
-//        sent <- doc.sentences
-//        lemmas <- sent.lemmas
-//      } yield lemmas.mkString(" ") + "."
-      //      println(splitLine.head + "\n")
-      //      println(bodyLemmatized.mkString(" "))
-
+////
+////      //println(doc.sentences.foreach(sent => sent.lemmas.mkString(" ") + ". " + "\n"))
+////      //fw.write(splitLine.head + "\t" + doc.sentences.foreach(sent => sent.lemmas.mkString(" ") + ". " + "\n"))
+//////      val bodyLemmatized = for {
+//////        sent <- doc.sentences
+//////        lemmas <- sent.lemmas
+//////      } yield lemmas.mkString(" ") + "."
+////      //      println(splitLine.head + "\n")
+////      //      println(bodyLemmatized.mkString(" "))
+////
       for {
         sent <- doc.sentences
         lemmas <- sent.lemmas
         } fw.write(lemmas.mkString(" ") + "." + "\n")
-//            println(splitLine.head + "\n")
-//            println(bodyLemmatized.mkString(" "))
-
-      //fw.write(splitLine.head + "\t" + bodyLemmatized.mkString(" ") + "\n")
-
+////            println(splitLine.head + "\n")
+////            println(bodyLemmatized.mkString(" "))
+//
+//      //fw.write(splitLine.head + "\t" + bodyLemmatized.mkString(" ") + "\n")
+//
     }
 
 
