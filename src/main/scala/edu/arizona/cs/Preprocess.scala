@@ -68,54 +68,75 @@ class Preprocess() {
   def train(collection: String): Unit = {
 
     val files = getListOfFiles("./src/main/resources/wiki")
-
+    val proc = new ShallowNLPProcessor()
 
     val data = for {
       file <- files
-      line <- Source.fromFile(file).getLines()
-    } yield line.replaceAll("\\[\\[File.*?\\]\\]|\\[\\[Image.*?\\]\\]|^\n|\\[\\[Media.*?\\]\\]", "")
+      fileText = "\n\n" + Source.fromFile(file).getLines().mkString("\n\n").replaceAll("\\[ tpl \\]|\\[\\[File.*?\\]\\]|\\[\\[Image.*?\\]\\]|^\n|\\[\\[Media.*?\\]\\]|url.*? ", "")
 
-    val proc = new ShallowNLPProcessor()
+    }  yield (file, fileText)
 
-    //val titleBody = mutable.Map[String, String]()
-    val fw = new FileWriter("test.txt", true)
+    //home/masha/alexeeva_project/src/main/resources/lemmatized
 
-    val allData = data.mkString(" ").split("\\[\\[") //split on [[ to separate entries
-    //println(allData.length)
+    for (i <- data) {
+      val currentFileName = i._1.toString.split("/")//.slice(0, 5).mkString(" ")
+      val newFileName = "./src/main/resources/lemmatized/" + currentFileName.slice(5, currentFileName.length).mkString("/")
+      //println(newFileName)
+      val fw = new FileWriter(newFileName, true)
+      val allData = i._2.split("\n\n\\[\\[") //split on [[ to separate entries
+      for (line <- allData) {
+        //println(line)
+//        println(allData.indexOf(line))
 
-    for (line <- allData) {
-      //println(line)
-      println(allData.indexOf(line))
+        val splitLine = line.split("\\]\\]\n\n") //split on ]] to separate title from body
+        fw.write(splitLine.head.replaceAll("\n*", "") + "\t")
+        val textToLemmatize = splitLine.tail.mkString(" ").replaceAll("  +|\n", "").split("\\. ").filter(m => m.length > 0) //break body up into sentences
+        //println("-->" + splitLine.head)
+        //for (sent <- textToLemmatize) println("sent" + sent)
+        //val doc = proc.annotateFromSentences(textToLemmatize) //lemmatize
 
-      val splitLine = line.split("\\]\\]") //split on ]] to separate title from body
-      fw.write(splitLine.head + "\t")
-      val textToLemmatize = splitLine.tail.mkString(" ").split("\\. ").filter(m => m.length>5) //break body up into sentences
-//
-////      //textToLemmatize.foreach(m => println(m + "\n"))
-      val doc = proc.annotateFromSentences(textToLemmatize.headOption) //lemmatize
-////
-////      //println(doc.sentences.foreach(sent => sent.lemmas.mkString(" ") + ". " + "\n"))
-////      //fw.write(splitLine.head + "\t" + doc.sentences.foreach(sent => sent.lemmas.mkString(" ") + ". " + "\n"))
-//////      val bodyLemmatized = for {
-//////        sent <- doc.sentences
-//////        lemmas <- sent.lemmas
-//////      } yield lemmas.mkString(" ") + "."
-////      //      println(splitLine.head + "\n")
-////      //      println(bodyLemmatized.mkString(" "))
-////
-      for {
-        sent <- doc.sentences
-        lemmas <- sent.lemmas
-        } fw.write(lemmas.mkString(" ") + "." + "\n")
-////            println(splitLine.head + "\n")
-////            println(bodyLemmatized.mkString(" "))
-//
-//      //fw.write(splitLine.head + "\t" + bodyLemmatized.mkString(" ") + "\n")
-//
+        for {
+          sent <- proc.annotateFromSentences(textToLemmatize).sentences
+          lemmas <- sent.lemmas
+        } fw.write(lemmas.mkString(" ") + ". ")
+        fw.write("\n")
+
+      }
+
+       fw.close()
+
     }
 
 
-    fw.close()
+
+//    val fw = new FileWriter("test.txt", true)
+//
+//    val allData = data.mkString(" ").split("\\[\\[") //split on [[ to separate entries
+//    //println(allData.length)
+//
+//    for (line <- allData) {
+//      //println(line)
+//      println(allData.indexOf(line))
+//
+//      val splitLine = line.split("\\]\\]") //split on ]] to separate title from body
+//      fw.write(splitLine.head + "\t")
+//      val textToLemmatize = splitLine.tail.mkString(" ").split("\\. ").filter(m => m.length>5) //break body up into sentences
+//
+//      val doc = proc.annotateFromSentences(textToLemmatize.headOption) //lemmatize
+//
+//      for {
+//        sent <- doc.sentences
+//        lemmas <- sent.lemmas
+//        } fw.write(lemmas.mkString(" ") + "." + "\n")
+//////            println(splitLine.head + "\n")
+//////            println(bodyLemmatized.mkString(" "))
+////
+////      //fw.write(splitLine.head + "\t" + bodyLemmatized.mkString(" ") + "\n")
+////
+//    }
+
+
+   // fw.close()
 
     println("tada")
   }
