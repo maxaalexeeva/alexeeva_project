@@ -93,8 +93,8 @@ class Preprocess() {
 //        println(allData.indexOf(line))
 
         val splitLine = line.split("\\]\\]\n\n") //split on ]] to separate title from body
-        fw.write(splitLine.head.replaceAll("\n*", "") + "\t")
-        fwNonLem.write(splitLine.head.replaceAll("\n*", "") + "\t")
+        fw.write(splitLine.head.replaceAll("\n*", "") + "SPLITHERE")
+        fwNonLem.write(splitLine.head.replaceAll("\n*", "") + "SPLITHERE")
         val textToLemmatize = splitLine.tail.mkString(" ").replaceAll("  +|\n", "")//.split("\\. ").filter(m => m.length > 0) //break body up into sentences
         //println(textToLemmatize)
 
