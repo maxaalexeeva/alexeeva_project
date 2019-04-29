@@ -61,6 +61,29 @@ class QueryEngineTest extends FunSuite{
       val common_query: List[String] = q
       val ans1 = objQueryEngine.runQ1(common_query)
       println("TOP ANSWER " + ans1.head.DocName.get("docid"))
+      //println("Full Document: " + ans1.head.DocName.get("text"))
+      //val string = "one493two483three"
+      val pattern =
+      """(\d+)""".r
+      //     println("DIGITS: " + pattern.findAllIn(q.mkString(" ")).matchData) // foreach {
+      //        m => println("DIGITS: " + m.group(1))
+      //      }
+
+      val digits = for {
+        m <- pattern.findAllIn(q.mkString(" ")).matchData
+        digit = m.group(1)
+
+      } yield digit
+
+      if (digits.nonEmpty) {
+        for (digit <- digits) println("DIGITS: " + digit)
+        for {
+          ans <- ans1
+          text = ans.DocName.get("text")
+          if (text.contains(digits.toList.mkString(" ")))
+        } println("POTENTIAL GOOD ANSWER: " + ans.DocName.get("docid")) //println("TEXT: " + text)
+      }
+
 
       if (answers(index).contains(ans1.head.DocName.get("docid").toLowerCase())) {
         correct += 1
