@@ -69,18 +69,39 @@ class QueryEngineTest extends FunSuite{
       //        m => println("DIGITS: " + m.group(1))
       //      }
 
+      println("Q: " + q.mkString(" "))
+      val digits = new ListBuffer[String]
+      for(m <- pattern.findAllIn(q.mkString(" ")).matchData) {
+        digits += m.group(1)
+      }
+      /*
       val digits = for {
         m <- pattern.findAllIn(q.mkString(" ")).matchData
+
         digit = m.group(1)
 
       } yield digit
+      */
 
-      if (digits.nonEmpty) {
-        for (digit <- digits) println("DIGITS: " + digit)
+      //println("digits mkString " + digits.mkString(" "))
+
+      //for (d <- digits) println("for d <- Iterator-> " + d)
+      val digitList = digits.toList
+
+      println("DIGITS LENGTH " + digitList.size)
+      //println("Hi")
+      println("LIST: [" + digits.toList.mkString(", ") + "]")
+      println("Iterator mkString: " + digits.mkString(" "))
+
+      if (digitList.size > 0) { //println(digitList(0) + "x") else println("nothing")//{
+      //println("HI")
+//        println("DIG STR: " + digits.mkString(" "))
+//        println(digits.toList(0) + "x")
+//        for (digit <- digits) println("DIGITS: " + digit)
         for {
           ans <- ans1
           text = ans.DocName.get("text")
-          if (text.contains(digits.toList.mkString(" ")))
+          if (text.contains(digitList(0) + " "))
         } println("POTENTIAL GOOD ANSWER: " + ans.DocName.get("docid")) //println("TEXT: " + text)
       }
 
