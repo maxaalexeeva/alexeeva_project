@@ -48,7 +48,7 @@ import org.apache.lucene.util.BytesRef
 object QueryEngine {
 
   def main(args: Array[String]): Unit = {
-    val lemmatized = true
+    val lemmatized = false
 //    try {
       //val fileName: String = "input.txt"
     val pathToDocs = if (lemmatized == true) "./src/main/resources/lemmatized" else "./src/main/resources/non-lemmatized"
@@ -58,7 +58,7 @@ object QueryEngine {
     if (!indexFile.exists())
       indexFile.mkdirs()
       println("********Welcome to the Project!")
-    val query13a: List[String] = List("establishment", "kingdom")//, "order")
+    val query13a: List[String] = List("GOLDEN", "GLOBE", "WINNERS", "In", "2010", ":", "As", "Sherlock", "Holmes", "on", "film")//, "order")
     val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathOfIndex, lemmatized)
 //    println("Question 1a")
     val ans1: ListBuffer[ResultClass] = objQueryEngine.runQ1(query13a)
@@ -106,12 +106,12 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
       val lines = Source.fromFile(fileName).getLines().toList
      // val lines1 = lines.slice(1,lines.length)
       for (line <- lines.slice(1, lines.length) if !line.startsWith("Image") && !line.startsWith("File") && !line.startsWith("Media")) {
-        println(line)
+        //println(line)
         val splitLine = line.split("\t")
-        println("head " + splitLine.head)
+        //println("head " + splitLine.head)
         val docId = splitLine.head
         val text = splitLine.tail.mkString(" ")
-        println("text "+ text)
+        //println("text "+ text)
         addDoc(writer, docId, text)
       } //println("line " + line)
 
@@ -149,7 +149,7 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
   }
 
   def runQ1(query: List[String]): ListBuffer[ResultClass] = {
-    if(! indexExists) buildIndex()
+    //if(! indexExists) buildIndex()
 
     val query_to_parse = query.mkString(" ")
     val q = new QueryParser("text", analyzer).parse(query_to_parse)
@@ -207,56 +207,6 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
 
   }
 
-  def runQ13a(query: List[String]): ListBuffer[ResultClass] = {
-    if(! indexExists) buildIndex()
-    val query_to_parse = "'" + query(0) + "'" + " AND " + "'"+query(1) + "'"
-    val q = new QueryParser("text", analyzer).parse(query_to_parse)
-    val doc_score_list = getDocScoreList(q)
-    return doc_score_list
-  }
-
-  def runQ13b(query: List[String]): ListBuffer[ResultClass] = {
-    if(! indexExists) buildIndex()
-    val query_to_parse = "'" + query(0) + "'" + " NOT " + "'"+query(1) + "'"
-    //println("query with NOT: " + query_to_parse)
-    val q = new QueryParser("text", analyzer).parse(query_to_parse)
-    val doc_score_list = getDocScoreList(q)
-    return doc_score_list
-  }
-
-  def runQ13c(query: List[String]): ListBuffer[ResultClass] = {
-    if(! indexExists) buildIndex()
-    val query_to_parse = '"' + query(0) + " AND " +query(1) + '"' + "~1"
-    //println("query with proximity: " + query_to_parse)
-    val q = new QueryParser("text", analyzer).parse(query_to_parse)
-    val doc_score_list = getDocScoreList(q)
-    return doc_score_list
-  }
-
-  def runQ14(query: List[String]): ListBuffer[ResultClass] = {
-    if(! indexExists) buildIndex()
-    val query_to_parse = "'" + query.mkString(" ")
-    val q = new QueryParser("text", analyzer).parse(query_to_parse)
-    val doc_score_list = getDocScoreListDiffSimilarity(q)
-    return doc_score_list
-  }
-
-
-  private def returnDummyResults(): ListBuffer[ResultClass] = {
-    var doc_score_list = new ListBuffer[ResultClass]()
-    for (i <- 0.until(2)) {
-      val doc: Document = new Document()
-      doc.add(new TextField("title", "", Field.Store.YES))
-      doc.add(
-        new StringField("docid",
-          "Doc" + java.lang.Integer.toString(i + 1),
-          Field.Store.YES))
-      val objResultClass: ResultClass = new ResultClass()
-      objResultClass.DocName = doc
-      doc_score_list += (objResultClass)
-    }
-    return doc_score_list
-  }
 
 
   def displayResults(hits: Array[ScoreDoc], searcher: IndexSearcher): Unit = {
