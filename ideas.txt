@@ -1,0 +1,5 @@
+1) make a field for categories and check Alex's comments for the category. retrieve chunk after "give us the" and check that against categories? no, not gonna work bc it is not going to search for the state anyway so not gonna return it... is there a way to change where the query should look case by case? maybe if you have 'you give us', then search this way and prioritize cat.
+
+2) focus on second best results. maybe use 'and' in some way?
+
+3) proximity search.. but how, with so many words in the query? maybe get rid of stop words?

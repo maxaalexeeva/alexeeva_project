@@ -12,18 +12,15 @@ import scala.collection.mutable.ListBuffer
 
 class QueryEngineTest extends FunSuite{
 
-  //val inputFileFullPath = "input.txt"
   val questionsFile = "questions.txt"
   val doc_names_q1 = List("Doc1", "Doc2")
 
 
-  test("QueryEngine.Q1") {
+  test("QueryEngine.Improved") {
     val proc = new CluProcessor()
 
     val pathOfIndex = "./src/main/resources/lemmIndDir"
     val pathToDocs = "./src/main/resources/lemmatized"
-
-    //val inputFileFullPath = "input.txt"
     val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathOfIndex, true)
 
     val source = Source.fromInputStream(getClass().getClassLoader().getResourceAsStream(questionsFile))
@@ -35,74 +32,57 @@ class QueryEngineTest extends FunSuite{
     for (doc <- docs) {
       val lines = doc.split("\n")
       val q = lines.slice(0,2).mkString(" ").toLowerCase().replaceAll("\\(|\\)|\\!|\\.", "")
-      //println(q)
       val lemmQ = proc.mkDocument(q)
       proc.lemmatize(lemmQ)
       val lemmatizedQuery = lemmQ.sentences.head.lemmas.head.toList
-      //println("lemmatized query " + lemmatizedQuery.mkString(" "))
       queries += lemmatizedQuery
       var answer = Array(lines.last.mkString("").toLowerCase())
       if (answer.head contains "|") {
         answer = answer.head.split("\\|")
       }
       answers += answer
-      //println("-->" + lines.last.mkString("").toLowerCase())
     }
 
 
-    //for (q <- queries.toList) println(q + " " + q.mkString(" "))
-    //for (answer <- answers) println(answer.mkString(" "))
     var all = 0
     var correct = 0
     for (q <- queries.toList) {
       all += 1
       val index = queries.toList.indexOf(q)
-      println("Correct Answer: " + answers.toList(index).mkString(" "))
-      val common_query: List[String] = q
-      val ans1 = objQueryEngine.runQ1(common_query)
-      println("TOP ANSWER " + ans1.head.DocName.get("docid"))
-      //println("Full Document: " + ans1.head.DocName.get("text"))
-      //val string = "one493two483three"
-      val pattern =
-      """(\d+)""".r
-      //     println("DIGITS: " + pattern.findAllIn(q.mkString(" ")).matchData) // foreach {
-      //        m => println("DIGITS: " + m.group(1))
-      //      }
 
-      println("Q: " + q.mkString(" "))
+      println("QUERY: " + q.mkString(" "))
+      println("CORRECT ANSWER: " + answers.toList(index).mkString(" "))
+      val common_query: List[String] = q
+      println("ORIGINAL RESULTS:")
+      var ans1 = objQueryEngine.runQ1(common_query)
+      val pattern =
+      """(\d\d\d+)""".r
+
       val digits = new ListBuffer[String]
       for(m <- pattern.findAllIn(q.mkString(" ")).matchData) {
         digits += m.group(1)
       }
-      /*
-      val digits = for {
-        m <- pattern.findAllIn(q.mkString(" ")).matchData
 
-        digit = m.group(1)
-
-      } yield digit
-      */
-
-      //println("digits mkString " + digits.mkString(" "))
-
-      //for (d <- digits) println("for d <- Iterator-> " + d)
       val digitList = digits.toList
 
-      println("DIGITS LENGTH " + digitList.size)
-      //println("Hi")
-      println("LIST: [" + digits.toList.mkString(", ") + "]")
-      println("Iterator mkString: " + digits.mkString(" "))
 
-      if (digitList.size > 0) { //println(digitList(0) + "x") else println("nothing")//{
-      //println("HI")
-//        println("DIG STR: " + digits.mkString(" "))
-//        println(digits.toList(0) + "x")
-//        for (digit <- digits) println("DIGITS: " + digit)
-        for {
-          ans <- ans1
-          text = ans.DocName.get("text")
-          if (text.contains(digitList(0) + " "))
-        } println("POTENTIAL GOOD ANSWER: " + ans.DocName.get("docid")) //println("TEXT: " + text)
+      if (digitList.size > 0) {
+
+        val potentialAnswers = new ListBuffer[ResultClass]
+        for (ans <- ans1) {
+
+          val text = ans.DocName.get("text")
+
+          if (text.contains(digitList(0) + " ")) {
+            potentialAnswers prepend ans
+          }
+
+        }
+        if (potentialAnswers.length > 0) {
+          ans1 prepend potentialAnswers.last
+          println("PROMOTED ANSWER: " + potentialAnswers.last.DocName.get("docid"))
+        }
+
       }
 
 
@@ -110,51 +90,16 @@ class QueryEngineTest extends FunSuite{
         correct += 1
         println("CORRECT!!!")
       }
-      println(q.mkString(" "))
-      //for (x <- ans1) {println("=> " + x.DocName.get("docid"))}
       println("\n\n")
 
     }
 
     val acc = correct.toDouble/all
     println("ACCURACY: " + acc)
-    val common_query: List[String] = List("information", "retrieval")
-    val ans1 = objQueryEngine.runQ1(common_query)
-    val doc_names_q1 = List("Doc1", "Doc2")
-    var counter1 = 0
-    for (x <- ans1) {
-      assert(x.DocName.get("docid") == doc_names_q1(counter1))
-      counter1 = counter1 + 1
-    }
+    assert(acc > .20)
+
   }
 
-//  test("QueryEngine.Q13a") {
-// val objQueryEngine: QueryEngine = new QueryEngine(inputFileFullPath)
-//
-//    val common_query: List[String] = List("information", "retrieval")
-//    val ans1 = objQueryEngine.runQ13a(common_query)
-//    var counter1 = 0
-//    for (x <- ans1) {
-//      assert(x.DocName.get("docid") == doc_names_q1(counter1))
-//      counter1 = counter1 + 1
-//    }
-//  }
-//
-//  test("QueryEngine.Q13b") {
-//  val inputFileFullPath = "input.txt"
-//    val objQueryEngine: QueryEngine = new QueryEngine(inputFileFullPath)
-//    val common_query: List[String] = List("information", "retrieval")
-//    val ans1 = objQueryEngine.runQ13b(common_query)
-//    assert(ans1.size()  == 0)
-//
-//  }
-//
-//  test("QueryEngine.Q13c") {
-//   val inputFileFullPath = "input.txt"
-//    val objQueryEngine: QueryEngine = new QueryEngine(inputFileFullPath)
-//    val common_query: List[String] = List("information", "retrieval")
-//    val ans1 = objQueryEngine.runQ13c(common_query)
-//    assert(ans1(0).DocName.get("docid")== doc_names_q1(0))
-//  }
+
 
 }
