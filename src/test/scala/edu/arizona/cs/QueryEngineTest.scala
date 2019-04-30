@@ -31,16 +31,28 @@ class QueryEngineTest extends FunSuite{
 
     val queries = new ListBuffer[List[String]]()
     val answers = new ListBuffer[Array[String]]()
+    val queryChunks = new ListBuffer[List[String]]
+    val queryPOS = new ListBuffer[List[String]]
 
     for (doc <- docs) {
       val lines = doc.split("\n")
-      val q = lines.slice(0,2).mkString(" ").toLowerCase().replaceAll("\\(|\\)|\\!|\\.", "")
+      val q = lines.slice(0,2).mkString(" ").toLowerCase().replaceAll("\\(|\\)|\\!|\\.|:", "")
       //println(q)
-      val lemmQ = proc.mkDocument(q)
+      val lemmQ = proc.mkDocument(q) //query
+
       proc.lemmatize(lemmQ)
+      proc.tagPartsOfSpeech(lemmQ)
+      proc.chunking(lemmQ)
+      //for(l <- lemmQ.sentences) l.chunks.foreach(ch => println("chunk " + ch.mkString(" ")))
       val lemmatizedQuery = lemmQ.sentences.head.lemmas.head.toList
       //println("lemmatized query " + lemmatizedQuery.mkString(" "))
       queries += lemmatizedQuery
+
+      val chunkedQuery = lemmQ.sentences.head.chunks.head.toList
+      queryChunks += chunkedQuery
+
+      val posedQuery = lemmQ.sentences.head.tags.head.toList
+      queryPOS += posedQuery
       var answer = Array(lines.last.mkString("").toLowerCase())
       if (answer.head contains "|") {
         answer = answer.head.split("\\|")
@@ -57,53 +69,85 @@ class QueryEngineTest extends FunSuite{
     for (q <- queries.toList) {
       all += 1
       val index = queries.toList.indexOf(q)
-      println("Correct Answer: " + answers.toList(index).mkString(" "))
+      val relevantChunks = queryChunks(index)
+
+      //println("rel chunks: " + relevantChunks.mkString(" "))
+      println("CORRECT ANSWER: " + answers.toList(index).mkString(" "))
       val common_query: List[String] = q
-      val ans1 = objQueryEngine.runQ1(common_query)
-      println("TOP ANSWER " + ans1.head.DocName.get("docid"))
-      //println("Full Document: " + ans1.head.DocName.get("text"))
-      //val string = "one493two483three"
-      val pattern =
-      """(\d+)""".r
-      //     println("DIGITS: " + pattern.findAllIn(q.mkString(" ")).matchData) // foreach {
-      //        m => println("DIGITS: " + m.group(1))
-      //      }
 
-      println("Q: " + q.mkString(" "))
-      val digits = new ListBuffer[String]
-      for(m <- pattern.findAllIn(q.mkString(" ")).matchData) {
-        digits += m.group(1)
+      // a weighted query was supposed to include phrases with proximity and weights
+      val weighted_query = new ListBuffer[String]
+
+      if (q.contains("``")) {
+        val pattern = "``(.*?)''".r
+        val mtch = pattern.findAllIn(q.mkString(" "))
+        weighted_query += '"' + mtch.group(1) + '"' + "~1"
+
       }
-      /*
-      val digits = for {
-        m <- pattern.findAllIn(q.mkString(" ")).matchData
 
-        digit = m.group(1)
+      for (word <- q) {
 
-      } yield digit
-      */
+        val wordIndex = q.indexOf(word)
+        word match {
+          case word if (relevantChunks(wordIndex) == "I-NP") => {
+            weighted_query += word + "^2"
+          }
 
-      //println("digits mkString " + digits.mkString(" "))
 
-      //for (d <- digits) println("for d <- Iterator-> " + d)
-      val digitList = digits.toList
+            //the idea was to prioritize phrases:
+//          case word if (relevantChunks(wordIndex) == "I-NP") => {
+//            val phrase = new ListBuffer[String]
+//            var i = wordIndex
+//            while (i < q.length && relevantChunks(i) == "I-NP") {
+//              //println("THIS CHUNK " + relevantChunks(i))
+//              //println("THIS WORD " + q(i))
+//              phrase += q(i)
+//              i = i + 1
+//            }
+//            //println(phrase.mkString(" "))
+//            val phraseList = phrase.toList
+//            if (phraseList.length > 1) {
+//              weighted_query += '"' + phraseList.mkString(" ") + '"' + "~4"
+//
+//            }
+//
+//
+//          }
 
-      println("DIGITS LENGTH " + digitList.size)
-      //println("Hi")
-      println("LIST: [" + digits.toList.mkString(", ") + "]")
-      println("Iterator mkString: " + digits.mkString(" "))
+          case _ => weighted_query += word
+        }
+        //println(word + "<--word")
+        //println("word index " + wordIndex)
+        //println("chunk " + relevantChunks(wordIndex))
+        if (word == "this") {
+          val phrase = new ListBuffer[String]
+          var i = wordIndex + 1
+          while (i < q.length && relevantChunks(i) == "I-NP") {
+            //println("THIS CHUNK " + relevantChunks(i))
+            //println("THIS WORD " + q(i))
+            phrase += q(i)
+            i = i + 1
+          }
+          //println(phrase.mkString(" "))
+          val phraseList = phrase.toList
+          if (phraseList.length > 1) {
+            weighted_query += '"' + phraseList.mkString(" ") + '"' + "~1"
+          }
+          else {
+            if (phraseList.length == 1) weighted_query += phraseList.head + "^2"
+          }
 
-      if (digitList.size > 0) { //println(digitList(0) + "x") else println("nothing")//{
-      //println("HI")
-//        println("DIG STR: " + digits.mkString(" "))
-//        println(digits.toList(0) + "x")
-//        for (digit <- digits) println("DIGITS: " + digit)
-        for {
-          ans <- ans1
-          text = ans.DocName.get("text")
-          if (text.contains(digitList(0) + " "))
-        } println("POTENTIAL GOOD ANSWER: " + ans.DocName.get("docid")) //println("TEXT: " + text)
+        }
       }
+
+
+      val weightedQueryReady = weighted_query.toList.distinct
+      println("WEIGHTED QUERY " + weightedQueryReady.mkString(" "))
+
+      //val ans1 = objQueryEngine.runQ1(common_query)
+      val ans1 = objQueryEngine.runQ1(weightedQueryReady)
+
+
 
 
       if (answers(index).contains(ans1.head.DocName.get("docid").toLowerCase())) {
