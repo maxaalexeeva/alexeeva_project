@@ -16,6 +16,8 @@ class QueryEngineTest extends FunSuite{
   val questionsFile = "questions.txt"
   val doc_names_q1 = List("Doc1", "Doc2")
 
+
+  //WITH LEMMAS, NOT STEMS, IMPROVED; REQUIRES THE INDEX FOLDER 'lemmIndDir' IN ./src/main/resources/
   test("QueryEngine.Improved") {
     val proc = new CluProcessor()
 
@@ -101,7 +103,7 @@ class QueryEngineTest extends FunSuite{
   }
 
 
-  //
+  //WITH STEMS, NOT LEMMAS; REQUIRES THE INDEX FOLDER 'IndDir' IN ./src/main/resources/
 //  test("QueryEngine.OriginalStemmed") {
 //    val proc = new CluProcessor()
 //    val pathOfIndex = "./src/main/resources/IndDir"
@@ -148,6 +150,8 @@ class QueryEngineTest extends FunSuite{
 //    assert(p1 > 0.10)
 //  }
 //
+
+  //WITH LEMMAS, NOT STEMS; REQUIRES THE INDEX FOLDER 'lemmIndDir' IN ./src/main/resources/
 //  test("QueryEngine.OriginalWithLemmas") {
 //    val proc = new CluProcessor()
 //    val pathOfIndex = "./src/main/resources/lemmIndDir"
@@ -195,7 +199,7 @@ class QueryEngineTest extends FunSuite{
 //    assert(p1 > 0.10)
 //  }
 
-
+  //WITH NO LEMMAS AND NO STEMS; REQUIRES THE INDEX FOLDER 'neitherIndexDir' IN ./src/main/resources/
 //  test("QueryEngine.NeitherStemNorLemm") {
 //    val proc = new CluProcessor()
 //    val pathOfIndex = "./src/main/resources/neitherIndexDir" //uses the same index that was built

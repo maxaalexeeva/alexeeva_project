@@ -64,9 +64,7 @@ object QueryEngine {
       println("********Welcome to the Project!")
     val query13a: List[String] = List("GOLDEN", "GLOBE", "WINNERS", "In", "2010", ":", "As", "Sherlock", "Holmes", "on", "film")//, "order")
     val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathToIndex, lemmatized)
-//    println("Question 1a")
     val ans1: ListBuffer[ResultClass] = objQueryEngine.runQ1(query13a)
-//    println("\n")
 
 
   }
@@ -92,20 +90,20 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
   def buildIndex(): Unit = {
     println("building something")
 
+   // build one doc in your Lucene index from each line in the input file
+
     for (fileName <- files) {
       //val source = Source.fromInputStream(getClass().getClassLoader().getResourceAsStream(fileName.toString))
       //val lines = source.getLines().toList
       val lines = Source.fromFile(fileName).getLines().toList
      // val lines1 = lines.slice(1,lines.length)
       for (line <- lines.slice(1, lines.length) if !line.startsWith("Image") && !line.startsWith("File") && !line.startsWith("Media")) {
-        //println(line)
         val splitLine = line.split("\t")
-        //println("head " + splitLine.head)
         val docId = splitLine.head
         val text = splitLine.tail.mkString(" ")
-        //println("text "+ text)
         addDoc(writer, docId, text)
-      } //println("line " + line)
+      }
+
     }
 
     writer.close()
@@ -135,7 +133,7 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
 
     val query_to_parse = query.mkString(" ")
     val q = new QueryParser("text", analyzer).parse(query_to_parse)
-    val doc_score_list = getDocScoreList(q)
+    val doc_score_list = getDocScoreList(q) //change to getDocScoreListDiffSimilarity to run with different similarity
     return doc_score_list
 
   }
