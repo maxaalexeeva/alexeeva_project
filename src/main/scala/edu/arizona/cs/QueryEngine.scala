@@ -48,26 +48,26 @@ import org.apache.lucene.util.BytesRef
 object QueryEngine {
 
   def main(args: Array[String]): Unit = {
-    val lemmatized = false
-//    try {
-      //val fileName: String = "input.txt"
-    val pathToDocs = if (lemmatized == true) "./src/main/resources/lemmatized" else "./src/main/resources/non-lemmatized"
-    val pathOfIndex = if (lemmatized == true) "./src/main/resources/lemmIndDir" else "./src/main/resources/IndDir"
+    val lemmatized = true //true for lemmarized index and also for the neither stemmed nor lemmatized bc the "neither" one uses the same whitespace analyzer
 
-    val indexFile = new File(pathOfIndex)
+    //val pathToDocs = if (lemmatized == true) "./src/main/resources/lemmatized" else "./src/main/resources/non-lemmatized"
+    //val pathToIndex = if (lemmatized == true) "./src/main/resources/lemmIndDir" else "./src/main/resources/IndDir"
+
+    //uncomment to build an index with no stemming and not lemmatization
+    val pathToDocs = "./src/main/resources/non-lemmatized"
+    val pathToIndex = "./src/main/resources/neitherIndexDir"
+
+    val indexFile = new File(pathToIndex)
     if (!indexFile.exists())
       indexFile.mkdirs()
       println("********Welcome to the Project!")
     val query13a: List[String] = List("GOLDEN", "GLOBE", "WINNERS", "In", "2010", ":", "As", "Sherlock", "Holmes", "on", "film")//, "order")
-    val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathOfIndex, lemmatized)
+    val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathToIndex, lemmatized)
 //    println("Question 1a")
     val ans1: ListBuffer[ResultClass] = objQueryEngine.runQ1(query13a)
 //    println("\n")
 
 
-//    } catch {
-//      case ex: Exception => println("Error")
-//    }
   }
 
 }
@@ -76,7 +76,7 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
 
 
 
-  val analyzer = if (lemmatized == true) new WhitespaceAnalyzer else new StandardAnalyzer
+  val analyzer = if (lemmatized == false) new StandardAnalyzer else new WhitespaceAnalyzer
   val config = new IndexWriterConfig(analyzer)
   val index = FSDirectory.open(Paths.get(pathToIndex))
   val writer = new IndexWriter(index, config)
@@ -149,7 +149,7 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
   }
 
   def runQ1(query: List[String]): ListBuffer[ResultClass] = {
-    //if(! indexExists) buildIndex()
+    //if(! indexExists) buildIndex() //UNCOMMENT IF INDEX DOES NOT EXIST
 
     val query_to_parse = query.mkString(" ")
     val q = new QueryParser("text", analyzer).parse(query_to_parse)

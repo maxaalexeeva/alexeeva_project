@@ -17,100 +17,147 @@ class QueryEngineTest extends FunSuite{
   val doc_names_q1 = List("Doc1", "Doc2")
 
 
-  test("QueryEngine.Q1") {
+  test("QueryEngine.OriginalStemmed") {
     val proc = new CluProcessor()
-
-    val pathOfIndex = "./src/main/resources/lemmIndDir"
-    val pathToDocs = "./src/main/resources/lemmatized"
-
-    //val inputFileFullPath = "input.txt"
-    val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathOfIndex, true)
-
+    val pathOfIndex = "./src/main/resources/IndDir"
+    val pathToDocs = "./src/main/resources/non-lemmatized"
+    val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathOfIndex, false)
     val source = Source.fromInputStream(getClass().getClassLoader().getResourceAsStream(questionsFile))
     val docs = source.mkString("").split("\n\n") //category + query + answer
+    val queries = new ListBuffer[List[String]]()
+    val answers = new ListBuffer[Array[String]]()
+    for (doc <- docs) {
+      val lines = doc.split("\n")
+      val q = lines.slice(0,2).mkString(" ").replaceAll("\\(|\\)|\\!|\\.", "").replaceAll("-", " ")
+      //val lemmQ = proc.mkDocument(q)
+      //proc.lemmatize(lemmQ)
+      //val lemmatizedQuery = lemmQ.sentences.head.lemmas.head.toList
+      queries += q.split(" ").toList
+      var answer = Array(lines.last.mkString("").toLowerCase())
+      if (answer.head contains "|") {
+        answer = answer.head.split("\\|")
+      }
+      answers += answer
+    }
 
+    var all = 0
+    var correct = 0
+    for (q <- queries.toList) {
+      all += 1
+      val index = queries.toList.indexOf(q)
+      //println("Correct Answer: " + answers.toList(index).mkString(" "))
+      val common_query: List[String] = q
+      val ans1 = objQueryEngine.runQ1(common_query)
+      //println("TOP ANSWER " + ans1.head.DocName.get("docid"))
+      if (answers(index).contains(ans1.head.DocName.get("docid").toLowerCase())) {
+        correct += 1
+        //println("CORRECT!!!")
+      }
+      //println(q.mkString(" "))
+      //println("\n\n")
+
+    }
+
+    val acc = correct.toDouble/all
+    println("ACCURACY with stemming: " + acc)
+    assert(acc > 0.10)
+  }
+
+  test("QueryEngine.OriginalWithLemmas") {
+    val proc = new CluProcessor()
+    val pathOfIndex = "./src/main/resources/lemmIndDir"
+    val pathToDocs = "./src/main/resources/lemmatized"
+    val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathOfIndex, true)
+    val source = Source.fromInputStream(getClass().getClassLoader().getResourceAsStream(questionsFile))
+    val docs = source.mkString("").split("\n\n") //category + query + answer
     val queries = new ListBuffer[List[String]]()
     val answers = new ListBuffer[Array[String]]()
 
     for (doc <- docs) {
       val lines = doc.split("\n")
-      val q = lines.slice(0,2).mkString(" ").toLowerCase().replaceAll("\\(|\\)|\\!|\\.", "")
-      //println(q)
+      val q = lines.slice(0,2).mkString(" ").replaceAll("\\(|\\)|\\!|\\.", "")
       val lemmQ = proc.mkDocument(q)
       proc.lemmatize(lemmQ)
       val lemmatizedQuery = lemmQ.sentences.head.lemmas.head.toList
-      //println("lemmatized query " + lemmatizedQuery.mkString(" "))
       queries += lemmatizedQuery
       var answer = Array(lines.last.mkString("").toLowerCase())
       if (answer.head contains "|") {
         answer = answer.head.split("\\|")
       }
       answers += answer
-      //println("-->" + lines.last.mkString("").toLowerCase())
     }
 
-
-    //for (q <- queries.toList) println(q + " " + q.mkString(" "))
-    //for (answer <- answers) println(answer.mkString(" "))
     var all = 0
     var correct = 0
     for (q <- queries.toList) {
       all += 1
       val index = queries.toList.indexOf(q)
-      println("Correct Answer: " + answers.toList(index).mkString(" "))
+      //println("Correct Answer: " + answers.toList(index).mkString(" "))
       val common_query: List[String] = q
       val ans1 = objQueryEngine.runQ1(common_query)
-      println("TOP ANSWER " + ans1.head.DocName.get("docid"))
+      //println("TOP ANSWER " + ans1.head.DocName.get("docid"))
 
       if (answers(index).contains(ans1.head.DocName.get("docid").toLowerCase())) {
         correct += 1
-        println("CORRECT!!!")
+        //println("CORRECT!!!")
       }
-      println(q.mkString(" "))
-      //for (x <- ans1) {println("=> " + x.DocName.get("docid"))}
-      println("\n\n")
-
+      //println(q.mkString(" "))
+      //println("\n\n")
     }
 
     val acc = correct.toDouble/all
-    println("ACCURACY: " + acc)
-    val common_query: List[String] = List("information", "retrieval")
-    val ans1 = objQueryEngine.runQ1(common_query)
-    val doc_names_q1 = List("Doc1", "Doc2")
-    var counter1 = 0
-    for (x <- ans1) {
-      assert(x.DocName.get("docid") == doc_names_q1(counter1))
-      counter1 = counter1 + 1
-    }
+    println("ACCURACY with lemmatization: " + acc)
+    assert(acc > 0.10)
   }
 
-//  test("QueryEngine.Q13a") {
-// val objQueryEngine: QueryEngine = new QueryEngine(inputFileFullPath)
-//
-//    val common_query: List[String] = List("information", "retrieval")
-//    val ans1 = objQueryEngine.runQ13a(common_query)
-//    var counter1 = 0
-//    for (x <- ans1) {
-//      assert(x.DocName.get("docid") == doc_names_q1(counter1))
-//      counter1 = counter1 + 1
+
+//  test("QueryEngine.NeitherStemNorLemm") {
+//    val proc = new CluProcessor()
+//    val pathOfIndex = "./src/main/resources/neitherIndexDir" //uses the same index that was built
+//    val pathToDocs = "./src/main/resources/non-lemmatized"
+//    val objQueryEngine: QueryEngine = new QueryEngine(pathToDocs, pathOfIndex, true) //lemmatized is set to true here bc it also uses the whitespace analyzer
+//    val source = Source.fromInputStream(getClass().getClassLoader().getResourceAsStream(questionsFile))
+//    val docs = source.mkString("").split("\n\n") //category + query + answer
+//    val queries = new ListBuffer[List[String]]()
+//    val answers = new ListBuffer[Array[String]]()
+//    for (doc <- docs) {
+//      val lines = doc.split("\n")
+//      val q = lines.slice(0,2).mkString(" ").replaceAll("\\(|\\)|\\!|\\.", "").replaceAll("-", " ")
+//      //val lemmQ = proc.mkDocument(q)
+//      //proc.lemmatize(lemmQ)
+//      //val lemmatizedQuery = lemmQ.sentences.head.lemmas.head.toList
+//      queries += q.split(" ").toList
+//      var answer = Array(lines.last.mkString("").toLowerCase())
+//      if (answer.head contains "|") {
+//        answer = answer.head.split("\\|")
+//      }
+//      answers += answer
 //    }
-//  }
 //
-//  test("QueryEngine.Q13b") {
-//  val inputFileFullPath = "input.txt"
-//    val objQueryEngine: QueryEngine = new QueryEngine(inputFileFullPath)
-//    val common_query: List[String] = List("information", "retrieval")
-//    val ans1 = objQueryEngine.runQ13b(common_query)
-//    assert(ans1.size()  == 0)
+//    var all = 0
+//    var correct = 0
+//    for (q <- queries.toList) {
+//      all += 1
+//      val index = queries.toList.indexOf(q)
+//      println("Correct Answer: " + answers.toList(index).mkString(" "))
+//      val common_query: List[String] = q
+//      val ans1 = objQueryEngine.runQ1(common_query)
+//      println("TOP ANSWER " + ans1.head.DocName.get("docid"))
+//      println(ans1.head.DocName.get("text"))
+//      if (answers(index).contains(ans1.head.DocName.get("docid").toLowerCase())) {
+//        correct += 1
+//        println("CORRECT!!!")
+//      }
+//      println(q.mkString(" "))
+//      println("\n\n")
 //
-//  }
+//    }
 //
-//  test("QueryEngine.Q13c") {
-//   val inputFileFullPath = "input.txt"
-//    val objQueryEngine: QueryEngine = new QueryEngine(inputFileFullPath)
-//    val common_query: List[String] = List("information", "retrieval")
-//    val ans1 = objQueryEngine.runQ13c(common_query)
-//    assert(ans1(0).DocName.get("docid")== doc_names_q1(0))
+//    val acc = correct.toDouble/all
+//    println("ACCURACY with neither stemming, nor lemmatizing: " + acc)
+//    assert(acc > 0.10)
 //  }
+
+
 
 }
