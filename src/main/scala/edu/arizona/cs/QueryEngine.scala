@@ -50,12 +50,13 @@ object QueryEngine {
   def main(args: Array[String]): Unit = {
     val lemmatized = true //true for lemmarized index and also for the neither stemmed nor lemmatized bc the "neither" one uses the same whitespace analyzer
 
-    //val pathToDocs = if (lemmatized == true) "./src/main/resources/lemmatized" else "./src/main/resources/non-lemmatized"
-    //val pathToIndex = if (lemmatized == true) "./src/main/resources/lemmIndDir" else "./src/main/resources/IndDir"
+    //comment out the next two lines if want to train the index with no stemming and no lemmatization
+    val pathToDocs = if (lemmatized == true) "./src/main/resources/lemmatized" else "./src/main/resources/non-lemmatized"
+    val pathToIndex = if (lemmatized == true) "./src/main/resources/lemmIndDir" else "./src/main/resources/IndDir"
 
     //uncomment to build an index with no stemming and not lemmatization
-    val pathToDocs = "./src/main/resources/non-lemmatized"
-    val pathToIndex = "./src/main/resources/neitherIndexDir"
+//    val pathToDocs = "./src/main/resources/non-lemmatized"
+//    val pathToIndex = "./src/main/resources/neitherIndexDir"
 
     val indexFile = new File(pathToIndex)
     if (!indexFile.exists())
@@ -87,18 +88,9 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
 
   val files = getListOfFiles(pathToDocs)
 
-  //for (file <- files) println("file names: " + file.toString)
-
-//  for (fileName <- files) {
-//    val lines = Source.fromFile(fileName).getLines()
-//    for (line <- lines) println(line)
-//  }
 
   def buildIndex(): Unit = {
     println("building something")
-    //val source = Source.fromInputStream(getClass().getClassLoader().getResourceAsStream(input_file))
-    //val lines = source.getLines().toList
-//    // build one doc in your Lucene index from each line in the input file
 
     for (fileName <- files) {
       //val source = Source.fromInputStream(getClass().getClassLoader().getResourceAsStream(fileName.toString))
@@ -114,16 +106,6 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
         //println("text "+ text)
         addDoc(writer, docId, text)
       } //println("line " + line)
-
-//      for(line <- lines if line.nonEmpty) {
-//        println("LINE " + line)
-//        val docId = line.split("\t").head
-//        println("-->" + docId)
-//        val text = line.split("\t").tail.mkString(" ")
-//        println("text" + text)
-//        addDoc(writer, docId, text)
-//      }
-      //fileName.close()
     }
 
     writer.close()
