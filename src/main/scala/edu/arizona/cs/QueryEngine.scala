@@ -4,9 +4,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer
 import java.io._
 
-import org.apache.lucene.search.similarities.Similarity
-import org.apache.lucene.search.similarities.TFIDFSimilarity
-import org.apache.lucene.search.similarities.ClassicSimilarity
+import org.apache.lucene.search.similarities._
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.StringField
@@ -167,6 +165,7 @@ class QueryEngine(pathToDocs: String, pathToIndex: String, lemmatized: Boolean) 
     val hitsPerPage = 10
     val reader = DirectoryReader.open(index)
     val similarity = new ClassicSimilarity
+    //val similarity = new BooleanSimilarity
     val searcher = new IndexSearcher(reader)
     searcher.setSimilarity(similarity)
     val docs = searcher.search(q, hitsPerPage)
